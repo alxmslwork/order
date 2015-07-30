@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+function finish() {
+    echo "gracefully terminating php-fpm"
+    kill -QUIT $PID
+    wait $PID
+}
+
+trap finish EXIT
+
+if [ ! -z "${HOST}" ]; then
+    sed "s/^env\[HOST\].*/env[HOST] = $HOST/" -i /etc/php5/fpm/pool.d/www.conf
+fi
+
+php5-fpm -c /etc/php5/fpm &
+
+PID=$!
+
+wait $PID

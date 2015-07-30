@@ -1,0 +1,5 @@
+#!/bin/sh
+
+BASEDIR=$(dirname $0)
+./$BASEDIR/../nginx/config ordr.alxmsl.stage /var/log/nginx
+sudo sv restart nginx

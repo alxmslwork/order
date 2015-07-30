@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+function finish() {
+    echo "gracefully terminating nginx"
+    kill -QUIT $PID
+    wait $PID
+}
+
+trap finish EXIT
+
+nginx &
+
+PID=$!
+
+wait $PID
