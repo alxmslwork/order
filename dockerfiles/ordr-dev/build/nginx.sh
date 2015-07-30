@@ -2,6 +2,4 @@
 
 set -e
 
-apt-get install -y nginx-extras
-
-echo "daemon off;" >> /etc/nginx/nginx.conf
+mv /build/config/nginx.conf /etc/nginx/sites-available/default
