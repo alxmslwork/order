@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>oRDR</title>
+    <link rel='stylesheet' href='http://cdn.ordr.alxmsl.stage/css/bootstrap.min.css' type='text/css' media='all' />
+    <script src="http://cdn.ordr.alxmsl.stage/js/jquery-2.1.4.min.js"></script>
+    <script src="http://cdn.ordr.alxmsl.stage/js/bootstrap.min.js"></script>
+    <script src="http://cdn.ordr.alxmsl.stage/js/validator.min.js"></script>
+    <script type="application/javascript">
+        $(document).ready(function() {
+            $("#registrationForm").validator().on('submit', function (e) {
+                if (!e.isDefaultPrevented()) {
+                    e.preventDefault();
+                    $.ajax({
+                        url: "/registration",
+                        type: "POST",
+                        crossDomain: true,
+                        data: $("#registrationForm").serialize(),
+                        dataType: "json",
+                        success:function(result){
+                            if (result.completed) {
+                                localStorage.setItem("login", $("#login").val());
+
+                                $("#completeModal .modal-body").text("Уважаемый, "
+                                    + localStorage.getItem("login")
+                                    + ", вы успешно зарегистрированы и отныне можете входить в систему");
+                                $('#completeModal').modal('show');
+                            } else if (result.error) {
+                                $("#errorModal .modal-body").text("service error: " + result.error);
+                                $('#errorModal').modal('show');
+                            } else {
+                                $("#errorModal .modal-body").text("unknown response: " + JSON.stringify(result));
+                                $('#errorModal').modal('show');
+                            }
+                        },
+                        error:function(xhr, status, error){
+                            $("#errorModal .modal-body").text("error: " + status);
+                            $('#errorModal').modal('show');
+                        }
+                    });
+                }
+            });
+
+            $('#loginBtn').on('click', function () {
+                $(location).attr('href', "index.html");
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="row">&nbsp</div>
+<div class="row">
+    <div class="col-sm-4">&nbsp;</div>
+    <div class="col-sm-4">
+        <form role="form" id="registrationForm" data-toggle="validator" >
+            <div class="form-group">
+                <label for="login">Логин для регистрации</label>
+                <input type="text" class="form-control" id="login" name="login" placeholder="Ваш логин в системе"
+                   required
+                   pattern="^[a-z]{1,}$"
+                   maxlength="5"
+                   data-error="Логин, так-то, обязателен для регистрации. Допустимы символы a-z, не более 5-ти штук" />
+                <div class="help-block with-errors"></div>
+            </div>
+            <div class="form-group">
+                <label for="pass">Пароль</label>
+                <input type="password" class="form-control" name="password" id="pass" placeholder="Пароль"
+                   required
+                   pattern="^[A-z0-9]{5,}$"
+                   maxlength="32"
+                   data-error="Пароль от 5 до 32 символов латинского алфавита любого регистра либо цифр" />
+                <div class="help-block with-errors"></div>
+            </div>
+            <div class="form-group">
+                <label class="radio-inline">
+                    <input type="radio" name="type" id="customer" value="customer"
+                       data-error="Обязательно нужно выбрать тип пользователя"
+                       required /> заказчик
+                </label>
+                <label class="radio-inline">
+                    <input type="radio" name="type" id="executor" value="executor"
+                       required /> исполнитель
+                </label>
+                <div class="help-block with-errors"></div>
+            </div>
+            <button type="submit" id="submitBtn" class="btn btn-success">Зарегистрироваться</button>
+        </form>
+    </div>
+    <div class="col-sm-4">&nbsp;</div>
+</div>
+
+<div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="myErrorModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myErrorModalLabel">Ошибка</h4>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">жаль</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="completeModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Вы зарегистрированы!</h4>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="loginBtn" class="btn btn-primary" data-dismiss="modal">Войти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

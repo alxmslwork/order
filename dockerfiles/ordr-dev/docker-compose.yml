@@ -1,7 +1,26 @@
+redis:
+    image: redis:3.0.3
+mysqlcommon:
+    image: mysql:5.6
+    environment:
+        - MYSQL_ROOT_PASSWORD=secret
+mysqlmap1:
+    image: mysql:5.6
+    environment:
+        - MYSQL_ROOT_PASSWORD=secret
+mysqlmap2:
+    image: mysql:5.6
+    environment:
+        - MYSQL_ROOT_PASSWORD=secret
 dev:
     image: ordr-dev:1.0
     ports:
         - "192.168.59.103:80:80"
         - "192.168.59.103:2224:22"
+    links:
+        - redis
+        - mysqlcommon
+        - mysqlmap1
+        - mysqlmap2
     environment:
         DEV_SSH_PUBKEY: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDWiA7GrtZZpKxj3u40vM6tYQuzKfDUmONrGicjuks579t2lTqaxrGTAUnJKDqlCSStBcoNGW2oo2D/SdB9WclcwzD83yfgnx9q/D4IEhdX1K/P/Ro+2AVACnrEa825PKDCY2A6oub5A04QH6UCWZp6J5GAc+1IQFQVhqo6nz7GM9l7fL5IMgWC/1My8c5kz3dPBJh6Z716qhyLddDvGYJUUBuKjeI4JFjIunrNCMOL6+Wq2W2tjp1TTtL9n3fizpapU7cbihFkmOFMik/rFuERzcf6oXnzj2K5JrRwHa5cKBQpvT7o6b5WYcShrOlwDYNIV7O4v+xM0Ym/47/siozH alxmsl@alxmsl-macbookpro.local"

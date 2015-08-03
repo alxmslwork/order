@@ -11,7 +11,7 @@ apt-get install -y php5-cli \
                    php5-memcached \
                    php5-intl \
                    php5-curl \
-                   php5-pgsql \
+                   php5-mysql \
                    php5-mcrypt \
                    php5-xhprof
 
