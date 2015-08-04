@@ -15,6 +15,10 @@ apt-get install -y php5-cli \
                    php5-mcrypt \
                    php5-xhprof
 
+# mcrypt
+ln -s /etc/php5/mods-available/mcrypt.ini /etc/php5/fpm/conf.d/20-mcrypt.ini
+ln -s /etc/php5/mods-available/mcrypt.ini /etc/php5/cli/conf.d/20-mcrypt.ini
+
 # memcached
 echo 'memcached.compression_type="zlib"' >> /etc/php5/mods-available/memcached.ini
 

@@ -26,7 +26,10 @@ if ($password === false) {
 $type = $_POST['type'];
 switch ($type) {
     case 'customer':
+        $userType = 0;
+        break;
     case 'executor':
+        $userType = 1;
         break;
     default:
         return [
@@ -34,23 +37,35 @@ switch ($type) {
         ];
 }
 
-//@todo: создание нового пользователя
-
-/**
- * @todo: проверить, что данного пользователя не существует или существует в карте пользователей
- * если карта недоступна, регистрироваться нельзя
- * карта шардится по логинам пользователей
- * для карты есть конфиг
- */
-includeModule('map');
-if (map_add($login)) {
-
-
-    return [
-        'completed' => true,
-    ];
+includeModule('authorizer');
+$hash = authorizer_add($login, $password);
+if ($hash !== false) {
+    includeModule('counter');
+    $userId = counter_increment();
+    if ($userId !== false) {
+        includeModule('user');
+        if (profile_add($userId, $login, $hash, $userType)) {
+            if (authorizer_update($login, $userId)) {
+                return [
+                    'completed' => true,
+                ];
+            } else {
+                return [
+                    'error' => 'map logic error',
+                ];
+            }
+        } else {
+            return [
+                'error' => 'user logic error',
+            ];
+        }
+    } else {
+        return [
+            'error' => 'user counter unavailable',
+        ];
+    }
 } else {
     return [
-        'error' => 'registration error',
+        'error' => 'user already created',
     ];
 }
