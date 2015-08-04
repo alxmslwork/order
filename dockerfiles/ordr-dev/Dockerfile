@@ -4,7 +4,9 @@ ENV DEBIAN_FRONTEND noninteractive
 
 ADD ./build /build
 
-RUN /build/tools.sh && \
+RUN /build/memcache.sh && \
+    /build/session.sh && \
+    /build/tools.sh && \
     /build/nginx.sh && \
     /build/ssh.sh
 

@@ -24,10 +24,31 @@ if ($password === false) {
     ];
 }
 
-//@todo: авторизация пользователя
-
-//@todo: создание сессии и редирект на страницу системы
-
-return [
-    'completed' => true,
-];
+includeModule('authorizer');
+$userId = authorizer_check($login, $password);
+if ($userId > 0) {
+    session_start();
+    $_SESSION['user_id'] = $userId;
+    return [
+        'completed' => true,
+    ];
+} else {
+    switch ($userId) {
+        case -1:
+            return [
+                'error' => 'service unavailable',
+            ];
+        case -2:
+            return [
+                'error' => 'user not found',
+            ];
+        case -3:
+            return [
+                'error' => 'password incorrect',
+            ];
+        default:
+            return [
+                'error' => 'unknown error',
+            ];
+    }
+}

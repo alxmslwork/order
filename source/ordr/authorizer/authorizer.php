@@ -127,3 +127,43 @@ function authorizer_update($login, $userId) {
     }
     return false;
 }
+
+/**
+ * Функция проверки авторизации пользователя
+ * @param string $login логин пользователя
+ * @param string $password пароль пользователя
+ * @return int идентификатор польвзоателя или код ошибки. Возможные коды ошибок:
+ *      -1 - техническая проблема, надо повторить вход позже
+ *      -2 - пользователь не найден, нужна регистрация
+ *      -3 - пароль пользователя не совпадает
+ */
+function authorizer_check($login, $password) {
+    $connection = authorizer_getconnection($login);
+    if ($connection !== false) {
+        $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
+        if ($link) {
+            mysql_select_db('map');
+            $result = mysql_query(sprintf('SELECT * FROM map WHERE login = "%s" AND user_id IS NOT NULL;', $login)
+                , $link);
+            if ($result) {
+                $row  = mysql_fetch_assoc($result);
+                if ($row) {
+                    $hash = password_hash($password, PASSWORD_BCRYPT, [
+                        'cost' => 11,
+                        'salt' => $row['salt'],
+                    ]);
+                    if ($row['hash'] === $hash) {
+                        return $row['user_id'];
+                    } else {
+                        return -3;
+                    }
+                } else {
+                    return -2;
+                }
+            } else {
+                return -1;
+            }
+        }
+    }
+    return -1;
+}

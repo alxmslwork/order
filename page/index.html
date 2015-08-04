@@ -26,6 +26,7 @@
                         dataType: "json",
                         success:function(result){
                             if (result.completed) {
+                                alert('Вы авторизованы!');
                             } else if (result.error) {
                                 $("#errorModal .modal-body").text("service error: " + result.error);
                                 $('#errorModal').modal('show');
