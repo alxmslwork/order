@@ -13,6 +13,9 @@ function session_config() {
     ];
 }
 
+/**
+ * @return mixed соединение с пулом кешей
+ */
 function session_getconnection() {
     $connection = null;
     $config     = session_config();
@@ -26,6 +29,11 @@ function session_getconnection() {
     return $connection;
 }
 
+/**
+ * Функция получения данных сессии
+ * @param string $sessionId идентификатор сессии
+ * @return mixed данные и сессии
+ */
 function session_get($sessionId) {
     $connection = session_getconnection();
     return memcache_get($connection, $sessionId);

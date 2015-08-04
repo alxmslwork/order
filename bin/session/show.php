@@ -1,6 +1,6 @@
 <?php
 /**
- *
+ * Скрипт просмотра данных сессии
  * @author alxmsl
  */
 $baseDir = realpath('.');
