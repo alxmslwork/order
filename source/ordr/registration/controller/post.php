@@ -37,14 +37,14 @@ switch ($type) {
         ];
 }
 
-includeModule('map');
+includeModule('authorizer');
 $hash = authorizer_add($login, $password);
 if ($hash !== false) {
     includeModule('counter');
     $userId = counter_increment();
     if ($userId !== false) {
         includeModule('user');
-        if (user_add($userId, $login, $hash, $userType)) {
+        if (profile_add($userId, $login, $hash, $userType)) {
             if (authorizer_update($login, $userId)) {
                 return [
                     'completed' => true,

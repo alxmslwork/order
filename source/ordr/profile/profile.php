@@ -2,7 +2,7 @@
 /**
  * @return array настройки шардов пользователей
  */
-function user_config() {
+function profile_config() {
     return [
         'shard' => [
             50000 => [
@@ -23,9 +23,9 @@ function user_config() {
  * Фукнция инициализации БД пользователей
  * Испольузется только для CLI
  */
-function user_initialize() {
+function profile_initialize() {
     if (PHP_SAPI == 'cli') {
-        $config = user_config();
+        $config = profile_config();
         foreach($config['shard'] as $k => $v) {
             $link = mysql_connect($v['host'], $v['user'], $v['password']);
             if ($link) {
@@ -64,8 +64,8 @@ EOD;
  * @param int $userId идентификатор пользователя
  * @return false|array массив настроек соединения или FALSE, если плохо всё
  */
-function user_getconnection($userId) {
-    $config = user_config();
+function profile_getconnection($userId) {
+    $config = profile_config();
     foreach($config['shard'] as $k => $v) {
         if ($userId <= $k) {
             return $v;
@@ -81,8 +81,8 @@ function user_getconnection($userId) {
  * @param int $userType тип пользователя
  * @return bool результат сохрания данных пользователя
  */
-function user_add($userId, $login, $hash, $userType) {
-    $connection = user_getconnection($login);
+function profile_add($userId, $login, $hash, $userType) {
+    $connection = profile_getconnection($login);
     if ($connection !== false) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
