@@ -27,11 +27,8 @@ if ($password === false) {
 includeModule('authorizer');
 $userId = authorizer_check($login, $password);
 if ($userId > 0) {
-
-    //@todo: создание сессии пользователя
-
-    //@todo: передача куков
-
+    session_start();
+    $_SESSION['user_id'] = $userId;
     return [
         'completed' => true,
     ];
