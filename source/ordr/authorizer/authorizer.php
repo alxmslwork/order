@@ -147,17 +147,21 @@ function authorizer_check($login, $password) {
                 , $link);
             if ($result) {
                 $row  = mysql_fetch_assoc($result);
-                $hash = password_hash($password, PASSWORD_BCRYPT, [
-                    'cost' => 11,
-                    'salt' => $row['salt'],
-                ]);
-                if ($row['hash'] === $hash) {
-                    return $row['user_id'];
+                if ($row) {
+                    $hash = password_hash($password, PASSWORD_BCRYPT, [
+                        'cost' => 11,
+                        'salt' => $row['salt'],
+                    ]);
+                    if ($row['hash'] === $hash) {
+                        return $row['user_id'];
+                    } else {
+                        return -3;
+                    }
                 } else {
-                    return -3;
+                    return -2;
                 }
             } else {
-                return -2;
+                return -1;
             }
         }
     }
