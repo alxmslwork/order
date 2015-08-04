@@ -4,7 +4,7 @@
  * @author alxmsl
  */
 define('APPLICATION_ROOT', $_SERVER['APPLICATION_ROOT']);
-define('SOURCE_ROOT', APPLICATION_ROOT . 'source/ordr');
+define('SOURCE_ROOT', APPLICATION_ROOT . 'source/ordr/');
 
 $method = $_SERVER['method'];
 $fileName = sprintf('%ssource/%s/%s.php'
@@ -18,7 +18,7 @@ function includeModule($moduleName) {
         include $fileName;
     } else {
         echo json_encode([
-            'error' => sprintf('module %s not found', $moduleName),
+            'error' => sprintf('module %s not found at %s', $moduleName, $fileName),
         ]);
         exit(-1);
     }
