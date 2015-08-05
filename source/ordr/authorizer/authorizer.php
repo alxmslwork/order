@@ -6,12 +6,14 @@ function authorizer_config() {
     return [
         'shard' => [
             'h' => [
-                'host'     => 'mysqlmap1',
+                'db'       => 'map1',
+                'host'     => 'mysql',
                 'user'     => 'root',
                 'password' => 'secret',
             ],
             'z' => [
-                'host'     => 'mysqlmap2',
+                'db'       => 'map2',
+                'host'     => 'mysql',
                 'user'     => 'root',
                 'password' => 'secret',
             ],
@@ -29,13 +31,13 @@ function authorizer_initialize() {
         foreach($config['shard'] as $k => $v) {
             $link = mysql_connect($v['host'], $v['user'], $v['password']);
             if ($link) {
-                if (mysql_query('CREATE DATABASE IF NOT EXISTS map;', $link)) {
-                    printf("%s: database map created\n", $v['host']);
+                if (mysql_query(sprintf('CREATE DATABASE IF NOT EXISTS %s;', $v['db']), $link)) {
+                    printf("%s: database %s created\n", $v['host'], $v['db']);
                 } else {
                     printf("%s: %s\n", $v['host'], mysql_error());
                 }
 
-                mysql_select_db('map', $link);
+                mysql_select_db($v['db'], $link);
                 $createTableQuery = <<<EOD
 CREATE TABLE IF NOT EXISTS map (
     login   VARCHAR(5)  NOT NULL,
@@ -46,7 +48,7 @@ CREATE TABLE IF NOT EXISTS map (
 );
 EOD;
                 if (mysql_query($createTableQuery, $link)) {
-                    printf("%s: table map::map created\n", $v['host']);
+                    printf("%s: table %s::map created\n", $v['host'], $v['db']);
                 } else {
                     printf("%s: %s\n", $v['host'], mysql_error());
                 }
@@ -91,13 +93,13 @@ function authorizer_add($login, $password) {
                 'cost' => 11,
                 'salt' => $salt,
             ]);
-            mysql_select_db('map');
+            mysql_select_db($connection['db'], $link);
             if (mysql_query(sprintf('INSERT INTO map (login, salt, hash) VALUES ("%s", "%s", "%s");'
                 , $login, $salt, $hash)
                 , $link)) {
 
                 if (mysql_affected_rows($link) == 1) {
-                    return $hash;
+                    return true;
                 }
             }
         }
@@ -116,7 +118,7 @@ function authorizer_update($login, $userId) {
     if ($connection !== false) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
-            mysql_select_db('map');
+            mysql_select_db($connection['db'], $link);
             if (mysql_query(sprintf('UPDATE map SET user_id = %s WHERE login = "%s" AND user_id IS NULL;', $userId, $login)
                 , $link)) {
                 if (mysql_affected_rows($link) == 1) {
@@ -142,7 +144,7 @@ function authorizer_check($login, $password) {
     if ($connection !== false) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
-            mysql_select_db('map');
+            mysql_select_db($connection['db'], $link);
             $result = mysql_query(sprintf('SELECT * FROM map WHERE login = "%s" AND user_id IS NOT NULL;', $login)
                 , $link);
             if ($result) {

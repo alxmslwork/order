@@ -38,13 +38,12 @@ switch ($type) {
 }
 
 includeModule('authorizer');
-$hash = authorizer_add($login, $password);
-if ($hash !== false) {
+if (authorizer_add($login, $password)) {
     includeModule('counter');
-    $userId = counter_increment();
+    $userId = counter_increment('users');
     if ($userId !== false) {
-        includeModule('user');
-        if (profile_add($userId, $login, $hash, $userType)) {
+        includeModule('profile');
+        if (profile_add($userId, $login, $userType)) {
             if (authorizer_update($login, $userId)) {
                 return [
                     'completed' => true,

@@ -27,11 +27,19 @@ if ($password === false) {
 includeModule('authorizer');
 $userId = authorizer_check($login, $password);
 if ($userId > 0) {
-    session_start();
-    $_SESSION['user_id'] = $userId;
-    return [
-        'completed' => true,
-    ];
+    includeModule('profile');
+    $profile = profile_get($userId);
+    if ($profile !== false) {
+        session_start();
+        $_SESSION['profile'] = $profile;
+        return [
+            'completed' => true,
+        ];
+    } else {
+        return [
+            'error' => 'user data unavailable',
+        ];
+    }
 } else {
     switch ($userId) {
         case -1:

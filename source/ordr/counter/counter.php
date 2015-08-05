@@ -4,7 +4,8 @@
  */
 function counter_config() {
     return [
-        'host'     => 'mysqlcommon',
+        'db'       => 'counter',
+        'host'     => 'mysql',
         'user'     => 'root',
         'password' => 'secret',
     ];
@@ -19,13 +20,13 @@ function counter_initialize() {
         $config = counter_config();
         $link = mysql_connect($config['host'], $config['user'], $config['password']);
         if ($link) {
-            if (mysql_query('CREATE DATABASE IF NOT EXISTS counter;', $link)) {
-                printf("database counter created\n");
+            if (mysql_query(sprintf('CREATE DATABASE IF NOT EXISTS %s;', $config['db']), $link)) {
+                printf("database %s created\n", $config['db']);
             } else {
                 die(sprintf("%s\n", mysql_error()));
             }
 
-            mysql_select_db('counter', $link);
+            mysql_select_db($config['db'], $link);
             $createTableQuery = <<<EOD
 CREATE TABLE IF NOT EXISTS counter (
     name  VARCHAR(10) NOT NULL,
@@ -34,13 +35,19 @@ CREATE TABLE IF NOT EXISTS counter (
 );
 EOD;
             if (mysql_query($createTableQuery, $link)) {
-                printf("table counter::counter created\n");
+                printf("table %s::counter created\n", $config['db']);
             } else {
                 die(sprintf("%s\n", mysql_error()));
             }
 
             if (mysql_query('INSERT INTO counter (name) VALUE ("users") ;', $link)) {
-                printf("default counter::counter.value initialized\n");
+                printf("default %s::counter.users initialized\n", $config['db']);
+            } else {
+                die(sprintf("%s\n", mysql_error()));
+            }
+
+            if (mysql_query('INSERT INTO counter (name) VALUE ("orders") ;', $link)) {
+                printf("default %s::counter.orders initialized\n", $config['db']);
             } else {
                 die(sprintf("%s\n", mysql_error()));
             }
@@ -54,14 +61,17 @@ EOD;
 
 /**
  * Атомарный инкремент счетчика
+ * @param string $name наименование счетчика
  * @return false|int новое значение счетчика либо FALSE в случае чего-либо плохого
  */
-function counter_increment() {
+function counter_increment($name) {
     $config = counter_config();
     $link = mysql_connect($config['host'], $config['user'], $config['password']);
     if ($link) {
-        mysql_select_db('counter');
-        if (mysql_query('UPDATE counter SET value = LAST_INSERT_ID(value + 1) WHERE name = "users";', $link)) {
+        mysql_select_db($config['db'], $link);
+        if (mysql_query(sprintf('UPDATE counter SET value = LAST_INSERT_ID(value + 1) WHERE name = "%s";', $name)
+            , $link)) {
+
             if ($result = mysql_query('SELECT LAST_INSERT_ID();', $link)) {
                 $data = mysql_fetch_row($result);
                 return $data[0];

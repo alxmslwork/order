@@ -11,6 +11,6 @@ else
 
 $_SESSION['visit']++;
 
-echo "Server IP: ".$_SERVER['SERVER_ADDR'] . "\n";
 echo "Client IP: ".$_SERVER['REMOTE_ADDR'] . "\n";
 print_r($_COOKIE);
+print_r($_SESSION);

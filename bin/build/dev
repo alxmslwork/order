@@ -1,5 +1,11 @@
 #!/bin/sh
 
 BASEDIR=$(dirname $0)
+
+php $BASEDIR/../db/init/authorizer.php
+php $BASEDIR/../db/init/counter.php
+php $BASEDIR/../db/init/order.php
+php $BASEDIR/../db/init/profile.php
+
 ./$BASEDIR/../nginx/config ordr.alxmsl.stage /var/log/nginx/
 sudo sv restart nginx

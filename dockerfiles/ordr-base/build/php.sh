@@ -13,7 +13,8 @@ apt-get install -y php5-cli \
                    php5-curl \
                    php5-mysql \
                    php5-mcrypt \
-                   php5-xhprof
+                   php5-xhprof \
+                   php5-redis
 
 # mcrypt
 ln -s /etc/php5/mods-available/mcrypt.ini /etc/php5/fpm/conf.d/20-mcrypt.ini
