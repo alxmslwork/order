@@ -21,17 +21,19 @@ includeModule('order');
                 $(location).attr('href', "/profile");
             });
 
-            $('#editBtn').on('click', function () {
+            $('.editBtn').on('click', function () {
                 $(location).attr('href', "/order/" + $(this).data("order"));
             });
 
-            $('#deleteBtn').on('click', function () {
+            $('.deleteBtn').on('click', function () {
+                var orderId = $(this).data("order")
                 $.ajax({
-                    url: "/order/" + $(this).data("order"),
+                    url: "/order/" + orderId,
                     type: "DELETE",
                     dataType: "json",
-                    success:function(result){
+                    success:function(result) {
                         if (result.completed) {
+                            $("tr#row" + orderId).remove();
                             $("#completeModal .modal-body").text("Заказ успешно удален");
                             $('#completeModal').modal('show');
                         } else if (result.error) {
@@ -49,7 +51,7 @@ includeModule('order');
                 });
             });
 
-            $('#executeBtn').on('click', function () {
+            $('.executeBtn').on('click', function () {
                 $(location).attr('href', "/profile");
             });
         });
@@ -95,16 +97,16 @@ includeModule('order');
                 $orders = ($_SESSION['profile']['type'] == 0) ? order_get_all($_SESSION['profile']['user_id']) : cache_get();
                 foreach($orders as $order):
             ?>
-                <tr>
+                <tr id="row<?= $order['order_id'] ?>">
                     <td><?= $order['description'] ?></td>
                     <td><?= $order['price'] ?></td>
                     <td><?= date('Y-m-d H:i:s', $order['updated']) ?></td>
                     <td>
                         <?php if($_SESSION['profile']['type'] == 0): ?>
-                            <button type="button" id="editBtn" data-order="<?= $order['order_id'] ?>" class="btn btn-default" data-dismiss="modal">редактировать</button>
-                            <button type="button" id="deleteBtn" data-order="<?= $order['order_id'] ?>" class="btn btn-default" data-dismiss="modal">удалить</button>
+                            <button type="button" data-order="<?= $order['order_id'] ?>" class="editBtn btn btn-default" data-dismiss="modal">редактировать</button>
+                            <button type="button" data-order="<?= $order['order_id'] ?>" class="deleteBtn btn btn-default" data-dismiss="modal">удалить</button>
                         <?php else: ?>
-                            <button type="button" id="executeBtn" data-order="<?= $order['order_id'] ?>" class="btn btn-default" data-dismiss="modal">выполнить</button>
+                            <button type="button" data-order="<?= $order['order_id'] ?>" class="executeBtn btn btn-default" data-dismiss="modal">выполнить</button>
                         <?php endif ?>
                     </td>
                 </tr>
@@ -136,13 +138,13 @@ includeModule('order');
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">Вы зарегистрированы!</h4>
+                <h4 class="modal-title" id="myModalLabel">Поздравляю!</h4>
             </div>
             <div class="modal-body">
-                ...
+                Ваш заказ успешно удален
             </div>
             <div class="modal-footer">
-                <button type="button" id="loginBtn" class="btn btn-primary" data-dismiss="modal">Войти</button>
+                <button type="button" id="loginBtn" class="btn btn-primary" data-dismiss="modal">Спасибо</button>
             </div>
         </div>
     </div>

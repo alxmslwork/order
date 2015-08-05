@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS `order` (
     price       DECIMAL(10,2) NOT NULL,
     updated     INT           NOT NULL,
     executor_id INT           DEFAULT NULL,
+    deleted     BOOLEAN       DEFAULT FALSE,
     PRIMARY KEY (customer_id, order_id)
 );
 EOD;
@@ -117,12 +118,11 @@ function order_get_all($userId) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
-            $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s;', $userId), $link);
+            $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND deleted = false;', $userId), $link);
             $orders = [];
             while ($row = mysql_fetch_assoc($result)) {
                 $orders[] = $row;
             }
-            mysql_free_result($result);
             return $orders;
         }
     }
@@ -135,9 +135,25 @@ function order_get($orderId, $userId) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
-            $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND order_id = %s;'
+            $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND order_id = %s AND deleted = false;'
                 , $userId, $orderId), $link);
             return mysql_fetch_assoc($result);
+        }
+    }
+    return false;
+}
+
+function order_delete($orderId, $userId) {
+    $connection = order_getconnection($userId);
+    if ($connection !== false) {
+        $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
+        if ($link) {
+            mysql_select_db($connection['db'], $link);
+            $result = mysql_query(sprintf('UPDATE `order` SET deleted = true WHERE customer_id = %s AND order_id = %s AND deleted = false;'
+                , $userId, $orderId), $link);
+            if (mysql_affected_rows($link) == 1) {
+                return true;
+            }
         }
     }
     return false;
