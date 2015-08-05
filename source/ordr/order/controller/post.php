@@ -52,8 +52,8 @@ if ($_SESSION['profile']['type'] == 0) {
     } else {
         $order = order_update($_SESSION['profile']['user_id'], $order['order_id'], $description, $price);
         if ($order !== false) {
-//            includeModule('cache');
-//            cache_add($order);
+            includeModule('cache');
+            cache_update($order);
             return [
                 'completed' => true,
             ];

@@ -12,6 +12,8 @@ if ($_SESSION['profile']['type'] == 0) {
         $orderId = $_SERVER['order'];
         includeModule('order');
         if (order_delete($orderId, $_SESSION['profile']['user_id'])) {
+            includeModule('cache');
+            cache_delete($orderId);
             return [
                 'completed' => true,
             ];
