@@ -23,21 +23,45 @@ if ($_SESSION['profile']['type'] == 0) {
         ];
     }
 
-    includeModule('counter');
-    $orderId = counter_increment('orders');
-
     includeModule('order');
-    $order = order_add($_SESSION['profile']['user_id'], $orderId, $description, $price);
-    if ($order !== false) {
-        includeModule('cache');
-        cache_add($order);
-        return [
-            'completed' => true,
-        ];
+    $order = null;
+    if (array_key_exists('order', $_SERVER)) {
+        $orderId = $_SERVER['order'];
+        $order = order_get($orderId, $_SESSION['profile']['user_id']);
+        if ($order === false) {
+            $order = null;
+        }
+    }
+
+    if (is_null($order)) {
+        includeModule('counter');
+        $orderId = counter_increment('orders');
+
+        $order = order_add($_SESSION['profile']['user_id'], $orderId, $description, $price);
+        if ($order !== false) {
+            includeModule('cache');
+            cache_add($order);
+            return [
+                'completed' => true,
+            ];
+        } else {
+            return [
+                'error' => 'service temporary unavailable',
+            ];
+        }
     } else {
-        return [
-            'error' => 'service temporary unavailable',
-        ];
+        $order = order_update($_SESSION['profile']['user_id'], $order['order_id'], $description, $price);
+        if ($order !== false) {
+//            includeModule('cache');
+//            cache_add($order);
+            return [
+                'completed' => true,
+            ];
+        } else {
+            return [
+                'error' => 'service temporary unavailable',
+            ];
+        }
     }
 } else {
     return [

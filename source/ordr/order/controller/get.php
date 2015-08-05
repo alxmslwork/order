@@ -154,13 +154,13 @@ if (array_key_exists('order', $_SERVER)) {
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">Заказ успешно создан!</h4>
+                <h4 class="modal-title" id="myModalLabel">Заказ сохранен</h4>
             </div>
             <div class="modal-body">
-                Заказ создан. Теперь вы можете перейти к списку своих заказов
+                Заказ опубликован. Хотите просмотреть все свои заказы?
             </div>
             <div class="modal-footer">
-                <button type="button" id="ordersBtn" class="btn btn-primary" data-dismiss="modal">Перейти к заказам</button>
+                <button type="button" id="ordersBtn" class="btn btn-primary" data-dismiss="modal">Конечно</button>
             </div>
         </div>
     </div>

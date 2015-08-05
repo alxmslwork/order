@@ -112,6 +112,31 @@ function order_add($userId, $orderId, $description, $price) {
     return false;
 }
 
+function order_update($userId, $orderId, $description, $price) {
+    $connection = order_getconnection($userId);
+    if ($connection !== false) {
+        $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
+        if ($link) {
+            mysql_select_db($connection['db'], $link);
+            $now = time();
+            if (mysql_query(sprintf('UPDATE `order` SET description = "%s", price = %s, updated = %s WHERE order_id = %s AND customer_id = %s AND deleted = false;'
+                , $description, $price, $now, $orderId, $userId), $link)) {
+
+                if (mysql_affected_rows($link) == 1) {
+                    return [
+                        'order_id'    => $orderId,
+                        'customer_id' => $userId,
+                        'description' => $description,
+                        'price'       => $price,
+                        'updated'     => $now,
+                    ];
+                }
+            }
+        }
+    }
+    return false;
+}
+
 function order_get_all($userId) {
     $connection = order_getconnection($userId);
     if ($connection !== false) {
