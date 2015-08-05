@@ -5,5 +5,5 @@
  */
 
 $baseDir = realpath('.');
-include $baseDir . '/source/ordr/map/map.php';
+include $baseDir . '/source/ordr/authorizer/authorizer.php';
 authorizer_initialize();

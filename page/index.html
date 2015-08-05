@@ -9,39 +9,47 @@
     <script src="http://cdn.ordr.alxmsl.stage/js/validator.min.js"></script>
     <script type="application/javascript">
         $(document).ready(function() {
-            $("#login").val(localStorage.getItem("login"));
+            if (navigator.cookieEnabled) {
+                $("#login").val(localStorage.getItem("login"));
 
-            $('#registrationLink').on('click', function () {
-                $(location).attr('href', "registration.html");
-            });
+                $('#registrationLink').on('click', function () {
+                    $(location).attr('href', "registration.html");
+                });
 
-            $("#loginForm").validator().on('submit', function (e) {
-                if (!e.isDefaultPrevented()) {
-                    e.preventDefault();
-                    $.ajax({
-                        url: "/login",
-                        type: "POST",
-                        crossDomain: true,
-                        data: $("#loginForm").serialize(),
-                        dataType: "json",
-                        success:function(result){
-                            if (result.completed) {
-                                alert('Вы авторизованы!');
-                            } else if (result.error) {
-                                $("#errorModal .modal-body").text("service error: " + result.error);
-                                $('#errorModal').modal('show');
-                            } else {
-                                $("#errorModal .modal-body").text("unknown response: " + JSON.stringify(result));
+                $("#loginForm").validator().on('submit', function (e) {
+                    if (!e.isDefaultPrevented()) {
+                        e.preventDefault();
+                        $.ajax({
+                            url: "/login",
+                            type: "POST",
+                            crossDomain: true,
+                            data: $("#loginForm").serialize(),
+                            dataType: "json",
+                            success:function(result){
+                                if (result.completed) {
+                                    $(location).attr('href', "profile");
+                                } else if (result.error) {
+                                    $("#errorModal .modal-body").text("service error: " + result.error);
+                                    $('#errorModal').modal('show');
+                                } else {
+                                    $("#errorModal .modal-body").text("unknown response: " + JSON.stringify(result));
+                                    $('#errorModal').modal('show');
+                                }
+                            },
+                            error:function(xhr, status, error){
+                                $("#errorModal .modal-body").text("error: " + status);
                                 $('#errorModal').modal('show');
                             }
-                        },
-                        error:function(xhr, status, error){
-                            $("#errorModal .modal-body").text("error: " + status);
-                            $('#errorModal').modal('show');
-                        }
-                    });
-                }
-            });
+                        });
+                    }
+                });
+            } else {
+                $("#errorModal .modal-body").text('Для входа в систему необходимо включить cookies');
+                $('#errorModal').modal('show');
+                $("#loginForm").validator().on('submit', function (e) {
+                    return false;
+                });
+            }
         });
     </script>
 </head>

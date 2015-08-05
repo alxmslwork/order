@@ -5,5 +5,5 @@
  */
 
 $baseDir = realpath('.');
-include $baseDir . '/source/ordr/user/user.php';
+include $baseDir . '/source/ordr/profile/profile.php';
 profile_initialize();
