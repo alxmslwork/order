@@ -79,9 +79,26 @@ function cache_delete($orderId) {
     } catch (RedisException $Ex) {}
 }
 
-function cache_get() {
-    $Redis1 = cache_getconnection('updated');
-    $data   = $Redis1->zRange('updated', 0, -1);
+function cache_get($order, $orderType) {
+    switch ($order) {
+        case 'price':
+            $key = 'price';
+            break;
+        case 'date':
+        default:
+            $key = 'updated';
+            break;
+    }
+    $Redis1 = cache_getconnection($key);
+    switch ($orderType) {
+        case 'asc':
+            $data = $Redis1->zRange($key, 0, -1);
+            break;
+        case 'desc':
+        default:
+            $data = $Redis1->zRevRange($key, 0, -1);
+            break;
+    }
     /** @var RedisArray $Redis2 */
     $Redis2 = cache_getconnection('orders');
     $data   = $Redis2->mget($data);

@@ -6,6 +6,9 @@ if (!isset($_SESSION['profile'])) {
 }
 includeModule('cache');
 includeModule('order');
+
+var_dump($_SERVER['order'], $_SERVER['type']);
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -21,6 +24,14 @@ includeModule('order');
                 $(location).attr('href', "/profile");
             });
 
+            $("#orderBtn").on("click", function() {
+                $(location).attr('href', "/profile/date/<?= $_SERVER['type'] == 'asc' ? 'desc' : 'asc' ?>");
+            });
+
+            $("#typeBtn").on("click", function() {
+                $(location).attr('href', "/profile/price/<?= $_SERVER['type'] == 'asc' ? 'desc' : 'asc' ?>");
+            });
+
             Date.prototype.YmdHis = function() {
                 var Y = this.getFullYear().toString();
                 var m = (this.getMonth()+1).toString();
@@ -33,43 +44,43 @@ includeModule('order');
             };
 
             <?php if($_SESSION['profile']['type'] == 1): ?>
-                setInterval (function() {
-                    $.ajax({
-                        url: "/cache",
-                        type: "GET",
-                        dataType: "json",
-                        success:function(result) {
-                            if (result.orders) {
-                                $(".table > tbody").empty();
-                                for (var i in result.orders) {
-                                    var updated = new Date(result.orders[i].updated * 1000);
-                                    $(".table > tbody").append('<tr id="row' + result.orders[i].order_id + '">'
-                                        + '<td>' + result.orders[i].description + '</td>'
-                                        + '<td>' + result.orders[i].price + '</td>'
-                                        + '<td>' + updated.YmdHis() + '</td>'
-                                        + '<td>'
-                                        + '<button type="button" data-order="' + result.orders[i].order_id + '" data-owner="' + result.orders[i].customer_id
-                                            + '" class="executeBtn btn btn-default" data-dismiss="modal">выполнить</button>'
-                                        + '</td>'
-                                     + '</tr>');
-                                }
-                            }
-                        }
-                    });
-                }, 5000);
-
-                setInterval (function() {
-                    $.ajax({
-                        url: "/session",
-                        type: "GET",
-                        dataType: "json",
-                        success:function(result) {
-                            if (result.session) {
-                                $("#salaryCnt").text(result.session.money);
-                            }
-                        }
-                    });
-                }, 10000);
+//                setInterval (function() {
+//                    $.ajax({
+//                        url: "/cache",
+//                        type: "GET",
+//                        dataType: "json",
+//                        success:function(result) {
+//                            if (result.orders) {
+//                                $(".table > tbody").empty();
+//                                for (var i in result.orders) {
+//                                    var updated = new Date(result.orders[i].updated * 1000);
+//                                    $(".table > tbody").append('<tr id="row' + result.orders[i].order_id + '">'
+//                                        + '<td>' + result.orders[i].description + '</td>'
+//                                        + '<td>' + result.orders[i].price + '</td>'
+//                                        + '<td>' + updated.YmdHis() + '</td>'
+//                                        + '<td>'
+//                                        + '<button type="button" data-order="' + result.orders[i].order_id + '" data-owner="' + result.orders[i].customer_id
+//                                            + '" class="executeBtn btn btn-default" data-dismiss="modal">выполнить</button>'
+//                                        + '</td>'
+//                                     + '</tr>');
+//                                }
+//                            }
+//                        }
+//                    });
+//                }, 5000);
+//
+//                setInterval (function() {
+//                    $.ajax({
+//                        url: "/session",
+//                        type: "GET",
+//                        dataType: "json",
+//                        success:function(result) {
+//                            if (result.session) {
+//                                $("#salaryCnt").text(result.session.money);
+//                            }
+//                        }
+//                    });
+//                }, 10000);
             <?php endif ?>
 
             $('.editBtn').on('click', function () {
@@ -165,14 +176,21 @@ includeModule('order');
             <thead>
             <tr>
                 <th>Описание</th>
-                <th>Стоимость</th>
-                <th>Дата добавления</th>
+                <?php if($_SESSION['profile']['type'] == 1): ?>
+                    <th><button id="typeBtn" class="btn-link">Стоимость</button></th>
+                    <th><button id="orderBtn" class="btn-link">Дата</button></th>
+                <?php else: ?>
+                    <th>Стоимость</th>
+                    <th>Дата</th>
+                <?php endif ?>
                 <th>&nbsp;</th>
             </tr>
             </thead>
             <tbody>
                 <?php
-                    $orders = ($_SESSION['profile']['type'] == 0) ? order_get_all($_SESSION['profile']['user_id']) : cache_get();
+                    $orders = ($_SESSION['profile']['type'] == 0)
+                        ? order_get_all($_SESSION['profile']['user_id'])
+                        : cache_get($_SERVER['order'], $_SERVER['type']);
                     foreach($orders as $order):
                 ?>
                     <tr id="row<?= $order['order_id'] ?>">
