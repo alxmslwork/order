@@ -40,9 +40,10 @@ function profile_initialize() {
                 mysql_select_db($v['db'], $link);
                 $createTableQuery = <<<EOD
 CREATE TABLE IF NOT EXISTS user (
-    user_id INT         NOT NULL,
-    login   VARCHAR(5)  NOT NULL,
-    type    SMALLINT    NOT NULL,
+    user_id INT           NOT NULL,
+    login   VARCHAR(5)    NOT NULL,
+    type    SMALLINT      NOT NULL,
+    money   DECIMAL(10,2) DEFAULT 0.0,
     PRIMARY KEY (user_id)
 );
 EOD;
@@ -114,6 +115,20 @@ function profile_get($userId) {
             $result = mysql_query(sprintf('SELECT * FROM user WHERE user_id = %s;', $userId), $link);
             if ($result) {
                 return mysql_fetch_assoc($result);
+            }
+        }
+    }
+    return false;
+}
+
+function profile_update($userId, $money) {
+    $connection = profile_getconnection($userId);
+    if ($connection !== false) {
+        $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
+        if ($link) {
+            mysql_select_db($connection['db'], $link);
+            if (mysql_query(sprintf('UPDATE user SET money = money + %s WHERE user_id = %s;', $money, $userId), $link)) {
+                return mysql_affected_rows($link) == 1;
             }
         }
     }
