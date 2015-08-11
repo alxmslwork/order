@@ -40,7 +40,7 @@ if (array_key_exists('order', $_SERVER)) {
                         crossDomain: true,
                         data: $("#createOrderForm").serialize(),
                         dataType: "json",
-                        success:function(result){
+                        success:function(result) {
                             if (result.completed) {
                                 $('#completeModal').modal('show');
                             } else if (result.error) {

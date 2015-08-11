@@ -1,75 +1,93 @@
 <?php
 
-$GLOBALS['REDIS'] = null;
+$GLOBALS['REDIS'] = [];
 
 function cache_config() {
     return [
-        'host'     => 'redis',
+        'updated' => [
+            'host' => 'redis',
+        ],
+        'price' => [
+            'host' => 'redis',
+        ],
+        'orders' => ['redis'],
     ];
 }
 
-function cache_getconnection() {
-    if (is_null($GLOBALS['REDIS'])) {
+/**
+ * @param $name
+ * @return Redis
+ */
+function cache_getconnection($name) {
+    if (!array_key_exists($name, $GLOBALS['REDIS'])) {
         $config = cache_config();
-        $GLOBALS['REDIS'] = new Redis();
-        $GLOBALS['REDIS']->connect($config['host']);
+        if (isset($config[$name]['host'])) {
+            $GLOBALS['REDIS'][$name] = new Redis();
+            $GLOBALS['REDIS'][$name]->connect($config[$name]['host']);
+        } else {
+            $GLOBALS['REDIS'][$name] = new RedisArray($config[$name]);
+        }
     }
-    return $GLOBALS['REDIS'];
+    return $GLOBALS['REDIS'][$name];
 }
 
 function cache_add($order) {
-    $Redis = cache_getconnection();
-    $data  = sprintf('%010d:%s', $order['order_id'], json_encode($order));
-    $add   = <<<EOD
-    redis.call('zadd', 'updated', ARGV[1], ARGV[3])
-    redis.call('zadd', 'price', ARGV[2], ARGV[3])
-EOD;
     try {
-        $Redis->eval($add, [$order['updated'], $order['price'], $data]);
+        $data   = json_encode($order);
+        $Redis3 = cache_getconnection('orders');
+        $Redis3->set($order['order_id'], $data);
     } catch (RedisException $Ex) {}
     try {
-        $Redis->zAdd('price', $order['price'], $data);
+        $Redis1 = cache_getconnection('updated');
+        $Redis1->zAdd('updated', $order['updated'], $order['order_id']);
+    } catch (RedisException $Ex) {}
+    try {
+        $Redis2 = cache_getconnection('price');
+        $Redis2->zAdd('price', $order['price'], $order['order_id']);
     } catch (RedisException $Ex) {}
 }
 
 function cache_update($order) {
-    $Redis  = cache_getconnection();
-    $key1   = sprintf('(%010d', $order['order_id']);
-    $key2   = sprintf('(%010d', $order['order_id'] + 1);
-    $data   = sprintf('%010d:%s', $order['order_id'], json_encode($order));
     $update = <<<EOD
-    redis.call('zremrangebylex', 'updated', ARGV[1], ARGV[2])
-    redis.call('zremrangebylex', 'price', ARGV[1], ARGV[2])
-    redis.call('zadd', 'updated', ARGV[3], ARGV[5])
-    redis.call('zadd', 'price', ARGV[4], ARGV[5])
+    redis.call('zrem', KEYS[1], ARGV[1])
+    redis.call('zadd', KEYS[1], ARGV[2] ARGV[1])
 EOD;
 
     try {
-        $Redis->eval($update, [$key1, $key2, $order['updated'], $order['price'], $data]);
+        $data   = json_encode($order);
+        $Redis3 = cache_getconnection('orders');
+        $Redis3->set($order['order_id'], $data);
+    } catch (RedisException $Ex) {}
+    try {
+        $Redis1 = cache_getconnection('updated');
+        $Redis1->eval($update, ['updated', $order['order_id'], $order['updated']], 1);
+    } catch (RedisException $Ex) {}
+    try {
+        $Redis2 = cache_getconnection('price');
+        $Redis2->eval($update, ['price', $order['order_id'], $order['price']], 1);
     } catch (RedisException $Ex) {}
 }
 
 function cache_delete($orderId) {
-    $Redis  = cache_getconnection();
-    $key1   = sprintf('(%010d', $orderId);
-    $key2   = sprintf('(%010d', $orderId + 1);
-    $remove = <<<EOD
-    redis.call('zremrangebylex', 'updated', ARGV[1], ARGV[2])
-    redis.call('zremrangebylex', 'price', ARGV[1], ARGV[2])
-EOD;
-
     try {
-        $Redis->eval($remove, [$key1, $key2]);
+        $Redis1 = cache_getconnection('updated');
+        $Redis1->zRem('updated', $orderId);
+    } catch (RedisException $Ex) {}
+    try {
+        $Redis1 = cache_getconnection('price');
+        $Redis1->zRem('price', $orderId);
     } catch (RedisException $Ex) {}
 }
 
 function cache_get() {
-    $Redis  = cache_getconnection();
-    $data   = $Redis->zRange('updated', 0, -1);
+    $Redis1 = cache_getconnection('updated');
+    $data   = $Redis1->zRange('updated', 0, -1);
+    /** @var RedisArray $Redis2 */
+    $Redis2 = cache_getconnection('orders');
+    $data   = $Redis2->mget($data);
     $orders = [];
     foreach($data as $v) {
-        $p = explode(':', $v, 2);
-        $orders[] = json_decode($p[1], true);
+        $orders[] = json_decode($v, true);
     }
     return $orders;
 }

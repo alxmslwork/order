@@ -119,7 +119,7 @@ function order_update($userId, $orderId, $description, $price) {
         if ($link) {
             mysql_select_db($connection['db'], $link);
             $now = time();
-            if (mysql_query(sprintf('UPDATE `order` SET description = "%s", price = %s, updated = %s WHERE order_id = %s AND customer_id = %s AND deleted = false;'
+            if (mysql_query(sprintf('UPDATE `order` SET description = "%s", price = %s, updated = %s WHERE order_id = %s AND customer_id = %s AND deleted = false AND executor_id IS NULL;'
                 , $description, $price, $now, $orderId, $userId), $link)) {
 
                 if (mysql_affected_rows($link) == 1) {
@@ -143,7 +143,7 @@ function order_get_all($userId) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
-            $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND deleted = false;', $userId), $link);
+            $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND deleted = false AND executor_id IS NULL;', $userId), $link);
             $orders = [];
             while ($row = mysql_fetch_assoc($result)) {
                 $orders[] = $row;
@@ -154,14 +154,19 @@ function order_get_all($userId) {
     return false;
 }
 
-function order_get($orderId, $userId) {
+function order_get($orderId, $userId, $executorId = null) {
     $connection = order_getconnection($userId);
     if ($connection !== false) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
-            $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND order_id = %s AND deleted = false;'
-                , $userId, $orderId), $link);
+            if (is_null($executorId)) {
+                $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND order_id = %s AND deleted = false AND executor_id IS NULL;'
+                    , $userId, $orderId), $link);
+            } else {
+                $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND order_id = %s AND deleted = false AND executor_id = %s;'
+                    , $userId, $orderId, $executorId), $link);
+            }
             return mysql_fetch_assoc($result);
         }
     }
@@ -174,8 +179,24 @@ function order_delete($orderId, $userId) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
-            $result = mysql_query(sprintf('UPDATE `order` SET deleted = true WHERE customer_id = %s AND order_id = %s AND deleted = false;'
+            mysql_query(sprintf('UPDATE `order` SET deleted = true WHERE customer_id = %s AND order_id = %s AND deleted = false AND executor_id IS NULL;'
                 , $userId, $orderId), $link);
+            if (mysql_affected_rows($link) == 1) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function order_execute($orderId, $ownerId, $executorId) {
+    $connection = order_getconnection($ownerId);
+    if ($connection !== false) {
+        $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
+        if ($link) {
+            mysql_select_db($connection['db'], $link);
+            mysql_query(sprintf('UPDATE `order` SET executor_id = %s WHERE customer_id = %s AND order_id = %s AND deleted = false AND executor_id IS NULL;'
+                , $executorId, $ownerId, $orderId), $link);
             if (mysql_affected_rows($link) == 1) {
                 return true;
             }
