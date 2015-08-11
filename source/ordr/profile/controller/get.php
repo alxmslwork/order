@@ -7,7 +7,12 @@ if (!isset($_SESSION['profile'])) {
 includeModule('cache');
 includeModule('order');
 
-var_dump($_SERVER['order'], $_SERVER['type']);
+$offset = filter_var($_GET['offset'], FILTER_VALIDATE_INT);
+if ($offset === false) {
+    $offset = 0;
+}
+
+var_dump($_SERVER['order'], $_SERVER['type'], $offset);
 
 ?>
 <!DOCTYPE html>
@@ -44,43 +49,43 @@ var_dump($_SERVER['order'], $_SERVER['type']);
             };
 
             <?php if($_SESSION['profile']['type'] == 1): ?>
-//                setInterval (function() {
-//                    $.ajax({
-//                        url: "/cache",
-//                        type: "GET",
-//                        dataType: "json",
-//                        success:function(result) {
-//                            if (result.orders) {
-//                                $(".table > tbody").empty();
-//                                for (var i in result.orders) {
-//                                    var updated = new Date(result.orders[i].updated * 1000);
-//                                    $(".table > tbody").append('<tr id="row' + result.orders[i].order_id + '">'
-//                                        + '<td>' + result.orders[i].description + '</td>'
-//                                        + '<td>' + result.orders[i].price + '</td>'
-//                                        + '<td>' + updated.YmdHis() + '</td>'
-//                                        + '<td>'
-//                                        + '<button type="button" data-order="' + result.orders[i].order_id + '" data-owner="' + result.orders[i].customer_id
-//                                            + '" class="executeBtn btn btn-default" data-dismiss="modal">выполнить</button>'
-//                                        + '</td>'
-//                                     + '</tr>');
-//                                }
-//                            }
-//                        }
-//                    });
-//                }, 5000);
-//
-//                setInterval (function() {
-//                    $.ajax({
-//                        url: "/session",
-//                        type: "GET",
-//                        dataType: "json",
-//                        success:function(result) {
-//                            if (result.session) {
-//                                $("#salaryCnt").text(result.session.money);
-//                            }
-//                        }
-//                    });
-//                }, 10000);
+                setInterval (function() {
+                    $.ajax({
+                        url: "/cache?order=<?= $_SERVER['order'] ?>&type=<?= $_SERVER['type'] ?>&offset=<?= $offset ?>",
+                        type: "GET",
+                        dataType: "json",
+                        success:function(result) {
+                            if (result.orders) {
+                                $(".table > tbody").empty();
+                                for (var i in result.orders) {
+                                    var updated = new Date(result.orders[i].updated * 1000);
+                                    $(".table > tbody").append('<tr id="row' + result.orders[i].order_id + '">'
+                                        + '<td>' + result.orders[i].description + '</td>'
+                                        + '<td>' + result.orders[i].price + '</td>'
+                                        + '<td>' + updated.YmdHis() + '</td>'
+                                        + '<td>'
+                                        + '<button type="button" data-order="' + result.orders[i].order_id + '" data-owner="' + result.orders[i].customer_id
+                                            + '" class="executeBtn btn btn-default" data-dismiss="modal">выполнить</button>'
+                                        + '</td>'
+                                     + '</tr>');
+                                }
+                            }
+                        }
+                    });
+                }, 5000);
+
+                setInterval (function() {
+                    $.ajax({
+                        url: "/session",
+                        type: "GET",
+                        dataType: "json",
+                        success:function(result) {
+                            if (result.session) {
+                                $("#salaryCnt").text(result.session.money);
+                            }
+                        }
+                    });
+                }, 10000);
             <?php endif ?>
 
             $('.editBtn').on('click', function () {
@@ -190,7 +195,7 @@ var_dump($_SERVER['order'], $_SERVER['type']);
                 <?php
                     $orders = ($_SESSION['profile']['type'] == 0)
                         ? order_get_all($_SESSION['profile']['user_id'])
-                        : cache_get($_SERVER['order'], $_SERVER['type']);
+                        : cache_get($_SERVER['order'], $_SERVER['type'], $offset);
                     foreach($orders as $order):
                 ?>
                     <tr id="row<?= $order['order_id'] ?>">

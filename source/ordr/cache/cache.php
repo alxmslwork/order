@@ -79,7 +79,7 @@ function cache_delete($orderId) {
     } catch (RedisException $Ex) {}
 }
 
-function cache_get($order, $orderType) {
+function cache_get($order, $orderType, $offset) {
     switch ($order) {
         case 'price':
             $key = 'price';
@@ -92,11 +92,11 @@ function cache_get($order, $orderType) {
     $Redis1 = cache_getconnection($key);
     switch ($orderType) {
         case 'asc':
-            $data = $Redis1->zRange($key, 0, -1);
+            $data = $Redis1->zRange($key, $offset, $offset + 2);
             break;
         case 'desc':
         default:
-            $data = $Redis1->zRevRange($key, 0, -1);
+            $data = $Redis1->zRevRange($key, $offset, $offset + 2);
             break;
     }
     /** @var RedisArray $Redis2 */
