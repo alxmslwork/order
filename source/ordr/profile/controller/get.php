@@ -7,9 +7,12 @@ if (!isset($_SESSION['profile'])) {
 includeModule('cache');
 includeModule('order');
 
-$offset = filter_var($_GET['offset'], FILTER_VALIDATE_INT);
-if ($offset === false) {
-    $offset = 0;
+$offset = 0;
+if (array_key_exists('offset', $_GET)) {
+    $offset = filter_var($_GET['offset'], FILTER_VALIDATE_INT);
+    if ($offset === false) {
+        $offset = 0;
+    }
 }
 
 var_dump($_SERVER['order'], $_SERVER['type'], $offset);
@@ -39,7 +42,7 @@ var_dump($_SERVER['order'], $_SERVER['type'], $offset);
 
             $("#prevBtn").on("click", function () {
                 if (!$(this).hasClass("disabled")) {
-                    $(location).attr('href', "/profile/<?= $_SERVER['order'] ?>/<?= $_SERVER['type'] ?>?offset=<?= $offset - 3?>");
+                    $(location).attr('href', "/profile/<?= $_SERVER['order'] ?>/<?= $_SERVER['type'] ?>?offset=<?= $offset - ORDERS_PER_PAGE?>");
                 } else {
                     return false;
                 }
@@ -47,7 +50,7 @@ var_dump($_SERVER['order'], $_SERVER['type'], $offset);
 
             $("#nextBtn").on("click", function () {
                 if (!$(this).hasClass("disabled")) {
-                    $(location).attr('href', "/profile/<?= $_SERVER['order'] ?>/<?= $_SERVER['type'] ?>?offset=<?= $offset + 3?>");
+                    $(location).attr('href', "/profile/<?= $_SERVER['order'] ?>/<?= $_SERVER['type'] ?>?offset=<?= $offset + ORDERS_PER_PAGE?>");
                 } else {
                     return false;
                 }
@@ -197,20 +200,15 @@ var_dump($_SERVER['order'], $_SERVER['type'], $offset);
             <thead>
             <tr>
                 <th>Описание</th>
-                <?php if($_SESSION['profile']['type'] == 1): ?>
-                    <th><button id="typeBtn" class="btn-link">Стоимость</button></th>
-                    <th><button id="orderBtn" class="btn-link">Дата</button></th>
-                <?php else: ?>
-                    <th>Стоимость</th>
-                    <th>Дата</th>
-                <?php endif ?>
+                <th><button id="typeBtn" class="btn-link">Стоимость</button></th>
+                <th><button id="orderBtn" class="btn-link">Дата</button></th>
                 <th>&nbsp;</th>
             </tr>
             </thead>
             <tbody>
                 <?php
                     $orders = ($_SESSION['profile']['type'] == 0)
-                        ? order_get_all($_SESSION['profile']['user_id'])
+                        ? order_get_all($_SESSION['profile']['user_id'], $_SERVER['order'], $_SERVER['type'], $offset)
                         : cache_get($_SERVER['order'], $_SERVER['type'], $offset);
                     foreach($orders as $order):
                 ?>
@@ -231,8 +229,8 @@ var_dump($_SERVER['order'], $_SERVER['type'], $offset);
             </tbody>
             <tfoot>
                 <tr>
-                    <td><button id="prevBtn" type="button" class="btn btn-default <?= ($offset < 3) ? 'disabled' : '' ?>"><<</button></td>
-                    <td><button id="nextBtn" type="button" class="btn btn-default <?= empty($orders) ? 'disabled' : '' ?>"> >> </button></td>
+                    <td><button id="prevBtn" type="button" class="btn btn-default <?= ($offset < ORDERS_PER_PAGE) ? 'disabled' : '' ?>"><<</button></td>
+                    <td><button id="nextBtn" type="button" class="btn btn-default <?= count($orders) < ORDERS_PER_PAGE ? 'disabled' : '' ?>"> >> </button></td>
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
                 </tr>

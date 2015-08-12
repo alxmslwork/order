@@ -5,6 +5,7 @@
  */
 define('APPLICATION_ROOT', $_SERVER['APPLICATION_ROOT']);
 define('SOURCE_ROOT', APPLICATION_ROOT . 'source/ordr/');
+
 /**
  * Функция загрузки модуля
  * @param string $moduleName наименование модуля
@@ -20,6 +21,8 @@ function includeModule($moduleName) {
         exit(-1);
     }
 }
+
+define('ORDERS_PER_PAGE', 3);
 
 $method = $_SERVER['method'];
 $fileName = sprintf('%ssource/%s/%s.php'
