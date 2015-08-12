@@ -30,6 +30,7 @@ function payment_config() {
 
 /**
  * Функция инициализации хранилища
+ * Испольузется только для CLI
  */
 function payment_initialize() {
     if (PHP_SAPI == 'cli') {
