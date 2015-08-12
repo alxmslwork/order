@@ -1,21 +1,33 @@
 <?php
+/**
+ * Страница добавления и редактирования заказа
+ */
+
 session_start();
 if (!isset($_SESSION['profile'])) {
     header('Location: index.html');
     exit(0);
 }
+
+// Функционал данной страницы доступен только заказчикам
 if ($_SESSION['profile']['type'] != 0) {
     header('Location: /profile');
     exit(0);
 }
 
+/**
+ * Проверка ОДЗ на идентификатор редактируемого заказа
+ * Если проверка не была произведена успешно, считаем, что происходит добавление нового заказа
+ */
 $order = null;
 if (array_key_exists('order', $_SERVER)) {
-    $orderId = $_SERVER['order'];
-    includeModule('order');
-    $order = order_get($orderId, $_SESSION['profile']['user_id']);
-    if ($order === false) {
-        $order = null;
+    $orderId = filter_var($_SERVER['order'], FILTER_VALIDATE_INT);
+    if ($orderId !== false) {
+        includeModule('order');
+        $order = order_get($orderId, $_SESSION['profile']['user_id']);
+        if ($order === false) {
+            $order = null;
+        }
     }
 }
 
@@ -83,10 +95,8 @@ if (array_key_exists('order', $_SERVER)) {
                 <span class="sr-only">Меню с переключением</span>
             </button>
             <ul class="dropdown-menu" role="menu">
-                <? if ($_SESSION['profile']['type'] == 0): ?>
-                    <li><a href="/order">Создать заказ</a></li>
-                    <li class="divider"></li>
-                <? endif ?>
+                <li><a href="/order">Создать заказ</a></li>
+                <li class="divider"></li>
                 <li><a href="/logout">Выйти</a></li>
             </ul>
         </div>

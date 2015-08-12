@@ -22,6 +22,9 @@ function includeModule($moduleName) {
     }
 }
 
+/**
+ * Константа на количество отображаемых заказов на странице
+ */
 define('ORDERS_PER_PAGE', 3);
 
 $method = $_SERVER['method'];
@@ -37,7 +40,7 @@ if (file_exists($fileName)) {
     exit(0);
 } else {
     echo json_encode([
-        'error' => sprintf('method file %s not found', $fileName),
+        'error' => sprintf('method not found', $fileName),
     ]);
     exit(-1);
 }

@@ -1,12 +1,19 @@
 <?php
+/**
+ * Страница профиля пользвоателя. В зависимости от роли пользователя в системе, на странице отображаются либо
+ *  собственные заказы заказчика, либо активные заказы, доступные исполнителям
+ */
+
 session_start();
 if (!isset($_SESSION['profile'])) {
     header('Location: index.html');
     exit(0);
 }
+
 includeModule('cache');
 includeModule('order');
 
+// ОДЗ  на смещение выборки заказов
 $offset = 0;
 if (array_key_exists('offset', $_GET)) {
     $offset = filter_var($_GET['offset'], FILTER_VALIDATE_INT);
@@ -15,7 +22,30 @@ if (array_key_exists('offset', $_GET)) {
     }
 }
 
-var_dump($_SERVER['order'], $_SERVER['type'], $offset);
+// ОДЗ на испольуземый индекс
+switch ($_SERVER['order']) {
+    case 'price':
+    case 'date':
+        $sortOrder = $_SERVER['order'];
+        break;
+    default:
+        $sortOrder = 'date';
+        break;
+}
+
+// ОДЗ на тип сортировки
+switch ($_SERVER['type']) {
+    case 'asc':
+    case 'desc':
+        $sortType = $_SERVER['type'];
+        break;
+    default:
+        $sortType = 'desc';
+        break;
+}
+
+//@todo: удалить
+var_dump($sortOrder, $sortType, $offset);
 
 ?>
 <!DOCTYPE html>
@@ -184,7 +214,7 @@ var_dump($_SERVER['order'], $_SERVER['type'], $offset);
                     <li><a href="/order">Создать заказ</a></li>
                     <li class="divider"></li>
                 <?php else: ?>
-                    <li>&nbsp;Доход: <span id="salaryCnt"><?= $_SESSION['profile']['money'] ?: 0 ?></span></li>
+                    <li>&nbsp;Блага: <span id="salaryCnt"><?= $_SESSION['profile']['money'] ?: 0 ?></span></li>
                     <li class="divider"></li>
                 <?php endif ?>
                 <li><a href="/logout">Выйти</a></li>
@@ -207,9 +237,10 @@ var_dump($_SERVER['order'], $_SERVER['type'], $offset);
             </thead>
             <tbody>
                 <?php
+                    $s = $sortOrder == 'price' ? 'price' : 'updated';
                     $orders = ($_SESSION['profile']['type'] == 0)
-                        ? order_get_all($_SESSION['profile']['user_id'], $_SERVER['order'], $_SERVER['type'], $offset)
-                        : cache_get($_SERVER['order'], $_SERVER['type'], $offset);
+                        ? order_get_all($_SESSION['profile']['user_id'], $s, $sortType, $offset)
+                        : cache_get($s, $sortType, $offset);
                     foreach($orders as $order):
                 ?>
                     <tr id="row<?= $order['order_id'] ?>">

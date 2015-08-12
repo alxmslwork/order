@@ -1,5 +1,9 @@
 <?php
 /**
+ * Модуль для работы с сессиями пользователей
+ */
+
+/**
  * @return array настройки шардов хранения сессий пользователя
  */
 function session_config() {
@@ -14,7 +18,7 @@ function session_config() {
 }
 
 /**
- * @return mixed соединение с пулом кешей
+ * @return mixed соединение с пулом кешей хранения сессий пользователя
  */
 function session_getconnection() {
     $connection = null;

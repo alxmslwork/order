@@ -1,5 +1,12 @@
 <?php
 /**
+ * Модуль работы с заказами в системе.
+ * Заказы хранятся в БД, шардинг происходит по идентификатору пользвоателя системы. Шардингом можно управлять для
+ *  переноса данных активных пользователей на отдельные инстансы и для группировки менее активных пользователей на
+ *  других инстансах для ручного выравнивания нагруки на серверах БД
+ */
+
+/**
  * @return array настройки шардов хранения заказов пользователей
  */
 function order_config() {
@@ -112,6 +119,16 @@ function order_add($userId, $orderId, $description, $price) {
     return false;
 }
 
+/**
+ * Функция обновления заказа.
+ * Возможно только изменения заказа, выполнение которого не было произведено
+ *
+ * @param int $userId идентификатор пользователя
+ * @param int $orderId идентификатор заказа
+ * @param string $description описание заказа
+ * @param float $price стоимость заказа
+ * @return array|false данные измененного заказа или FALSE
+ */
 function order_update($userId, $orderId, $description, $price) {
     $connection = order_getconnection($userId);
     if ($connection !== false) {
@@ -137,37 +154,24 @@ function order_update($userId, $orderId, $description, $price) {
     return false;
 }
 
-function order_get_all($userId, $order, $orderType, $offset) {
-    $offset = filter_var($offset, FILTER_VALIDATE_INT);
-    if ($offset === false) {
-        $offset = 0;
-    }
-    switch ($order) {
-        case 'price':
-            $key = 'price';
-            break;
-        case 'date':
-        default:
-            $key = 'updated';
-            break;
-    }
-    switch ($orderType) {
-        case 'asc':
-            $type = 'ASC';
-            break;
-        case 'desc':
-        default:
-            $type = 'DESC';
-            break;
-    }
-
+/**
+ * Функция получения всех заказов пользователя.
+ * Возвращаются только неудаленные и невыполненные заказы, созданные пользователем
+ *
+ * @param int $userId идентификатор пользователя
+ * @param string $order поле сортировки заказов. ОДЗ: updated, price
+ * @param string $type тип сортировки заказов: по-возрастанию или по-убыванию
+ * @param int $offset смещение выборки заказов
+ * @return array|bool массив заказов пользователя
+ */
+function order_get_all($userId, $order, $type, $offset) {
     $connection = order_getconnection($userId);
     if ($connection !== false) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
             $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND deleted = false AND executor_id IS NULL ORDER BY %s %s LIMIT %s, %s;'
-                , $userId, $key, $type, $offset, ORDERS_PER_PAGE), $link);
+                , $userId, $order, $type, $offset, ORDERS_PER_PAGE), $link);
             $orders = [];
             if ($result) {
                 while ($row = mysql_fetch_assoc($result)) {
@@ -180,6 +184,15 @@ function order_get_all($userId, $order, $orderType, $offset) {
     return false;
 }
 
+/**
+ * Функция получения заказа пользователя
+ * Возвращаются только неудаленный заказ пользователя
+ *
+ * @param int $orderId идентификатор заказа
+ * @param int $userId иденитификатор хозяина заказа
+ * @param null|int $executorId идентификатор исполнителя заказа
+ * @return array|bool данные заказа или FALSE, если что-нибудь плохо
+ */
 function order_get($orderId, $userId, $executorId = null) {
     $connection = order_getconnection($userId);
     if ($connection !== false) {
@@ -199,32 +212,45 @@ function order_get($orderId, $userId, $executorId = null) {
     return false;
 }
 
+/**
+ * Функция удаления заказа.
+ * Возможно удаление только неудаленного и невыполненного заказа пользователя
+ *
+ * @param int $orderId идентификатор заказа
+ * @param int $userId иденитификатор хозяина заказа
+ * @return bool результат удаления заказа
+ */
 function order_delete($orderId, $userId) {
     $connection = order_getconnection($userId);
     if ($connection !== false) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
-            mysql_query(sprintf('UPDATE `order` SET deleted = true WHERE customer_id = %s AND order_id = %s AND deleted = false AND executor_id IS NULL;'
-                , $userId, $orderId), $link);
-            if (mysql_affected_rows($link) == 1) {
-                return true;
+            if (mysql_query(sprintf('UPDATE `order` SET deleted = true WHERE customer_id = %s AND order_id = %s AND deleted = false AND executor_id IS NULL;'
+                , $userId, $orderId), $link)) {
+                return (mysql_affected_rows($link) == 1);
             }
         }
     }
     return false;
 }
 
+/**
+ * Функция выполнения заказа пользователя
+ * @param int $orderId идентификатор заказа
+ * @param int $ownerId иденитификатор хозяина заказа
+ * @param int $executorId идентификатор исполнителя заказа
+ * @return bool результат назначения исполнителя заказа
+ */
 function order_execute($orderId, $ownerId, $executorId) {
     $connection = order_getconnection($ownerId);
     if ($connection !== false) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
-            mysql_query(sprintf('UPDATE `order` SET executor_id = %s WHERE customer_id = %s AND order_id = %s AND deleted = false AND executor_id IS NULL;'
-                , $executorId, $ownerId, $orderId), $link);
-            if (mysql_affected_rows($link) == 1) {
-                return true;
+            if (mysql_query(sprintf('UPDATE `order` SET executor_id = %s WHERE customer_id = %s AND order_id = %s AND deleted = false AND executor_id IS NULL;'
+                , $executorId, $ownerId, $orderId), $link)) {
+                return (mysql_affected_rows($link) == 1);
             }
         }
     }
