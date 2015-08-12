@@ -1,8 +1,10 @@
 <?php
 /**
- * Контроллер выполнения регистрации
+ * Метод API выполнения регистрации пользователя
  * @author alxmsl
  */
+
+// ОДЗ на логин пользователя
 $login = filter_var($_POST['login'], FILTER_VALIDATE_REGEXP, [
     'options' => [
         'regexp' => '/[a-z]{1,5}/',
@@ -13,6 +15,8 @@ if ($login === false) {
         'error' => 'invalid login value',
     ];
 }
+
+// ОДЗ на пароль пользователя
 $password = filter_var($_POST['password'], FILTER_VALIDATE_REGEXP, [
     'options' => [
         'regexp' => '/[A-z0-9]{5,32}/',
@@ -23,6 +27,8 @@ if ($password === false) {
         'error' => 'invalid password value',
     ];
 }
+
+// ОДЗ на тип пользователя
 $type = $_POST['type'];
 switch ($type) {
     case 'customer':
@@ -38,12 +44,16 @@ switch ($type) {
 }
 
 includeModule('authorizer');
+// Производим сохранение данных пользователя в авторайзер с шардингом по логину
 if (authorizer_add($login, $password)) {
     includeModule('counter');
+    // В случае успешного добавления, атомарно выделяем пользователю идентификатор для хранения данных профиля
     $userId = counter_increment('users');
     if ($userId !== false) {
         includeModule('profile');
+        // Сохраняем данные профиля пользователя
         if (profile_add($userId, $login, $userType)) {
+            // Атомарно связываем данные авторайзера и профиля пользователя
             if (authorizer_update($login, $userId)) {
                 return [
                     'completed' => true,

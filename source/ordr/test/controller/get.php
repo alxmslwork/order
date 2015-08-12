@@ -1,8 +1,9 @@
 <?php
 /**
- * Тестовый метод
+ * Тестовый метод API
  * @author alxmsl
  */
+
 return [
     'completed' => true,
 ];
