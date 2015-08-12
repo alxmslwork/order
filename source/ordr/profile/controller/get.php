@@ -44,9 +44,6 @@ switch ($_SERVER['type']) {
         break;
 }
 
-//@todo: удалить
-var_dump($sortOrder, $sortType, $offset);
-
 ?>
 <!DOCTYPE html>
 <html>
