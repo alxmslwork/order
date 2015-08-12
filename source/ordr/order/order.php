@@ -137,16 +137,42 @@ function order_update($userId, $orderId, $description, $price) {
     return false;
 }
 
-function order_get_all($userId) {
+function order_get_all($userId, $order, $orderType, $offset) {
+    $offset = filter_var($offset, FILTER_VALIDATE_INT);
+    if ($offset === false) {
+        $offset = 0;
+    }
+    switch ($order) {
+        case 'price':
+            $key = 'price';
+            break;
+        case 'date':
+        default:
+            $key = 'updated';
+            break;
+    }
+    switch ($orderType) {
+        case 'asc':
+            $type = 'ASC';
+            break;
+        case 'desc':
+        default:
+            $type = 'DESC';
+            break;
+    }
+
     $connection = order_getconnection($userId);
     if ($connection !== false) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
-            $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND deleted = false AND executor_id IS NULL;', $userId), $link);
+            $result = mysql_query(sprintf('SELECT * FROM `order` WHERE customer_id = %s AND deleted = false AND executor_id IS NULL ORDER BY %s %s LIMIT %s, %s;'
+                , $userId, $key, $type, $offset, ORDERS_PER_PAGE), $link);
             $orders = [];
-            while ($row = mysql_fetch_assoc($result)) {
-                $orders[] = $row;
+            if ($result) {
+                while ($row = mysql_fetch_assoc($result)) {
+                    $orders[] = $row;
+                }
             }
             return $orders;
         }

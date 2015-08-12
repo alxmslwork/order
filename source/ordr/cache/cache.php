@@ -80,6 +80,10 @@ function cache_delete($orderId) {
 }
 
 function cache_get($order, $orderType, $offset) {
+    $offset = filter_var($_GET['offset'], FILTER_VALIDATE_INT);
+    if ($offset === false) {
+        $offset = 0;
+    }
     switch ($order) {
         case 'price':
             $key = 'price';
@@ -92,11 +96,11 @@ function cache_get($order, $orderType, $offset) {
     $Redis1 = cache_getconnection($key);
     switch ($orderType) {
         case 'asc':
-            $data = $Redis1->zRange($key, $offset, $offset + 2);
+            $data = $Redis1->zRange($key, $offset, $offset + ORDERS_PER_PAGE - 1);
             break;
         case 'desc':
         default:
-            $data = $Redis1->zRevRange($key, $offset, $offset + 2);
+            $data = $Redis1->zRevRange($key, $offset, $offset + ORDERS_PER_PAGE - 1);
             break;
     }
     /** @var RedisArray $Redis2 */
