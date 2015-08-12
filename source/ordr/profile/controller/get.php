@@ -6,6 +6,14 @@ if (!isset($_SESSION['profile'])) {
 }
 includeModule('cache');
 includeModule('order');
+
+$offset = filter_var($_GET['offset'], FILTER_VALIDATE_INT);
+if ($offset === false) {
+    $offset = 0;
+}
+
+var_dump($_SERVER['order'], $_SERVER['type'], $offset);
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -19,6 +27,30 @@ includeModule('order');
         $(document).ready(function() {
             $('#profileButton').on('click', function () {
                 $(location).attr('href', "/profile");
+            });
+
+            $("#orderBtn").on("click", function() {
+                $(location).attr('href', "/profile/date/<?= $_SERVER['type'] == 'asc' ? 'desc' : 'asc' ?>");
+            });
+
+            $("#typeBtn").on("click", function() {
+                $(location).attr('href', "/profile/price/<?= $_SERVER['type'] == 'asc' ? 'desc' : 'asc' ?>");
+            });
+
+            $("#prevBtn").on("click", function () {
+                if (!$(this).hasClass("disabled")) {
+                    $(location).attr('href', "/profile/<?= $_SERVER['order'] ?>/<?= $_SERVER['type'] ?>?offset=<?= $offset - 3?>");
+                } else {
+                    return false;
+                }
+            });
+
+            $("#nextBtn").on("click", function () {
+                if (!$(this).hasClass("disabled")) {
+                    $(location).attr('href', "/profile/<?= $_SERVER['order'] ?>/<?= $_SERVER['type'] ?>?offset=<?= $offset + 3?>");
+                } else {
+                    return false;
+                }
             });
 
             Date.prototype.YmdHis = function() {
@@ -35,7 +67,7 @@ includeModule('order');
             <?php if($_SESSION['profile']['type'] == 1): ?>
                 setInterval (function() {
                     $.ajax({
-                        url: "/cache",
+                        url: "/cache?order=<?= $_SERVER['order'] ?>&type=<?= $_SERVER['type'] ?>&offset=<?= $offset ?>",
                         type: "GET",
                         dataType: "json",
                         success:function(result) {
@@ -165,14 +197,21 @@ includeModule('order');
             <thead>
             <tr>
                 <th>Описание</th>
-                <th>Стоимость</th>
-                <th>Дата добавления</th>
+                <?php if($_SESSION['profile']['type'] == 1): ?>
+                    <th><button id="typeBtn" class="btn-link">Стоимость</button></th>
+                    <th><button id="orderBtn" class="btn-link">Дата</button></th>
+                <?php else: ?>
+                    <th>Стоимость</th>
+                    <th>Дата</th>
+                <?php endif ?>
                 <th>&nbsp;</th>
             </tr>
             </thead>
             <tbody>
                 <?php
-                    $orders = ($_SESSION['profile']['type'] == 0) ? order_get_all($_SESSION['profile']['user_id']) : cache_get();
+                    $orders = ($_SESSION['profile']['type'] == 0)
+                        ? order_get_all($_SESSION['profile']['user_id'])
+                        : cache_get($_SERVER['order'], $_SERVER['type'], $offset);
                     foreach($orders as $order):
                 ?>
                     <tr id="row<?= $order['order_id'] ?>">
@@ -190,6 +229,14 @@ includeModule('order');
                     </tr>
                 <?php endforeach ?>
             </tbody>
+            <tfoot>
+                <tr>
+                    <td><button id="prevBtn" type="button" class="btn btn-default <?= ($offset < 3) ? 'disabled' : '' ?>"><<</button></td>
+                    <td><button id="nextBtn" type="button" class="btn btn-default <?= empty($orders) ? 'disabled' : '' ?>"> >> </button></td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
     <div class="col-sm-4">&nbsp;</div>
