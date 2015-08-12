@@ -37,6 +37,22 @@ var_dump($_SERVER['order'], $_SERVER['type'], $offset);
                 $(location).attr('href', "/profile/price/<?= $_SERVER['type'] == 'asc' ? 'desc' : 'asc' ?>");
             });
 
+            $("#prevBtn").on("click", function () {
+                if (!$(this).hasClass("disabled")) {
+                    $(location).attr('href', "/profile/<?= $_SERVER['order'] ?>/<?= $_SERVER['type'] ?>?offset=<?= $offset - 3?>");
+                } else {
+                    return false;
+                }
+            });
+
+            $("#nextBtn").on("click", function () {
+                if (!$(this).hasClass("disabled")) {
+                    $(location).attr('href', "/profile/<?= $_SERVER['order'] ?>/<?= $_SERVER['type'] ?>?offset=<?= $offset + 3?>");
+                } else {
+                    return false;
+                }
+            });
+
             Date.prototype.YmdHis = function() {
                 var Y = this.getFullYear().toString();
                 var m = (this.getMonth()+1).toString();
@@ -213,6 +229,14 @@ var_dump($_SERVER['order'], $_SERVER['type'], $offset);
                     </tr>
                 <?php endforeach ?>
             </tbody>
+            <tfoot>
+                <tr>
+                    <td><button id="prevBtn" type="button" class="btn btn-default <?= ($offset < 3) ? 'disabled' : '' ?>"><<</button></td>
+                    <td><button id="nextBtn" type="button" class="btn btn-default <?= empty($orders) ? 'disabled' : '' ?>"> >> </button></td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
     <div class="col-sm-4">&nbsp;</div>
