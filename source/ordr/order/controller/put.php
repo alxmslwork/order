@@ -24,7 +24,7 @@ if ($_SESSION['profile']['type'] == 1) {
             if ($order !== false) {
                 $salary = $order['price'] * .1;
                 includeModule('payment');
-                if (payment_add($_SESSION['profile']['user_id'], $salary)) {
+                if (payment_add($_SESSION['profile']['user_id'], $order['order_id'], $salary)) {
                     includeModule('profile');
                     if (profile_update($_SESSION['profile']['user_id'], $salary)) {
                         $_SESSION['profile']['money'] += $salary;

@@ -1,5 +1,14 @@
 <?php
+/**
+ * Модуль работы с платежами. Платежы сохраняются для возможности последующего восстановления системы в случае каких-то
+ *  непредвиденных ситуаций
+ * Платежи сохраняются в шарды по пользователям. Таблица платежа содержит данные по получателю средств, выполненном
+ *  заказе для получения средств, полученной сумме и даты выполнения заказа
+ */
 
+/**
+ * @return array конфигурация шардовых хранилищ для данных по платежам
+ */
 function payment_config() {
     return [
         'shard' => [
@@ -19,6 +28,9 @@ function payment_config() {
     ];
 }
 
+/**
+ * Функция инициализации хранилища
+ */
 function payment_initialize() {
     if (PHP_SAPI == 'cli') {
         $config = payment_config();
@@ -34,10 +46,11 @@ function payment_initialize() {
                 mysql_select_db($v['db'], $link);
                 $createTableQuery = <<<EOD
 CREATE TABLE IF NOT EXISTS payment (
-    user_id INT           NOT NULL,
-    value   DECIMAL(10,2) DEFAULT 0.0,
-    updated INT           NOT NULL,
-    PRIMARY KEY (user_id, updated)
+    user_id  INT           NOT NULL,
+    order_id INT           NOT NULL,
+    value    DECIMAL(10,2) DEFAULT 0.0,
+    updated  INT           NOT NULL,
+    PRIMARY KEY (user_id, order_id)
 );
 EOD;
                 if (mysql_query($createTableQuery, $link)) {
@@ -54,6 +67,11 @@ EOD;
     }
 }
 
+/**
+ * Функция получения настроек соединения сос тореджем
+ * @param int $userId идентификатор пользователя
+ * @return false|array массив настроек соединения со стореджем пользователя или FALSE
+ */
 function payment_getconnection($userId) {
     $config = payment_config();
     foreach($config['shard'] as $k => $v) {
@@ -64,14 +82,21 @@ function payment_getconnection($userId) {
     return false;
 }
 
-function payment_add($userId, $value) {
+/**
+ * Функция добавления платежа
+ * @param int $userId идентификатор пользователя, получающего платеж
+ * @param int $orderId идентификатор заказа, который выполнил пользователь
+ * @param float $value величина вознаграждения
+ * @return bool результат сохранения данных
+ */
+function payment_add($userId, $orderId, $value) {
     $connection = payment_getconnection($userId);
     if ($connection !== false) {
         $link = mysql_connect($connection['host'], $connection['user'], $connection['password']);
         if ($link) {
             mysql_select_db($connection['db'], $link);
-            if (mysql_query(sprintf('INSERT INTO payment (user_id, value, updated) VALUES (%s, %s, %s);'
-                , $userId, $value, time()), $link)) {
+            if (mysql_query(sprintf('INSERT INTO payment (user_id, order_id, value, updated) VALUES (%s, %s, %s, %s);'
+                , $userId, $orderId, $value, time()), $link)) {
                 return mysql_affected_rows($link) == 1;
             }
         }
