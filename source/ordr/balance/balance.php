@@ -76,3 +76,20 @@ function balance_increment($value) {
     return false;
 }
 
+/**
+ * Поулчение баланса системы
+ * @return false|float значение баланса системы
+ */
+function balance_get() {
+    $config = balance_config();
+    $link = mysql_connect($config['host'], $config['user'], $config['password']);
+    if ($link) {
+        mysql_select_db($config['db'], $link);
+        $result = mysql_query('SELECT * FROM balance WHERE name = "system";', $link);
+        if ($result) {
+            $row = mysql_fetch_assoc($result);
+            return $row['value'];
+        }
+    }
+    return false;
+}
