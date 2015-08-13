@@ -3,6 +3,7 @@
 BASEDIR=$(dirname $0)
 
 php $BASEDIR/../db/init/authorizer.php
+php $BASEDIR/../db/init/balance.php
 php $BASEDIR/../db/init/counter.php
 php $BASEDIR/../db/init/order.php
 php $BASEDIR/../db/init/payment.php
