@@ -36,9 +36,12 @@ if (!isset($_SESSION['profile'])) {
                              */
                             $order = order_get($orderId, $ownerId, $_SESSION['profile']['user_id']);
                             if ($order !== false) {
-                                $salary = $order['price'] * .1;
+                                $salary   = $order['price'] * .9;
+                                $interest = $order['price'] - $salary;
                                 includeModule('payment');
-                                if (payment_add($_SESSION['profile']['user_id'], $order['order_id'], $salary)) {
+                                if (payment_add($_SESSION['profile']['user_id'], $order['order_id'], $salary)
+                                    && payment_add(0, $order['order_id'], $interest)) {
+
                                     includeModule('profile');
                                     if (profile_update($_SESSION['profile']['user_id'], $salary)) {
                                         $_SESSION['profile']['money'] += $salary;
