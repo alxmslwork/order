@@ -42,6 +42,9 @@ if (!isset($_SESSION['profile'])) {
                                 if (payment_add($_SESSION['profile']['user_id'], $order['order_id'], $salary)
                                     && payment_add(0, $order['order_id'], $interest)) {
 
+                                    includeModule('balance');
+                                    balance_increment($interest);
+
                                     includeModule('profile');
                                     if (profile_update($_SESSION['profile']['user_id'], $salary)) {
                                         $_SESSION['profile']['money'] += $salary;
