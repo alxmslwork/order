@@ -58,20 +58,26 @@ if (!isset($_SESSION['profile'])) {
             $orderId = counter_increment('orders');
 
             // Добавляем новый заказ с данным уникальным идентификатором
-            //@todo: здесь нужно создать блокировку
-            $order = order_add($_SESSION['profile']['user_id'], $orderId, $description, $price);
-            if ($order !== false) {
-                // В случае успешного добавления греем кеш поиска заказов
-                includeModule('cache');
-                cache_add($order);
-                //@todo: здесь нужно снять блокировку
-                return [
-                    'completed' => true,
-                ];
+            includeModule('lock');
+            if (lock_lock($orderId, 2, 1)) {
+                $order = order_add($_SESSION['profile']['user_id'], $orderId, $description, $price);
+                if ($order !== false) {
+                    // В случае успешного добавления греем кеш поиска заказов
+                    includeModule('cache');
+                    cache_add($order);
+                    lock_unlock($orderId);
+                    return [
+                        'completed' => true,
+                    ];
+                } else {
+                    lock_unlock($orderId);
+                    return [
+                        'error' => 'service temporary unavailable',
+                    ];
+                }
             } else {
-                //@todo: здесь нужно снять блокировку
                 return [
-                    'error' => 'service temporary unavailable',
+                    'error' => 'order locked',
                 ];
             }
         } else {
@@ -79,19 +85,25 @@ if (!isset($_SESSION['profile'])) {
              * Если происходит редактирование заказа, изменяем его поля атомарно, в блокировке, чтобы данные БД и
              *  кеша совпадали при конкурентных запросах
              */
-            //@todo: здесь нужно создать блокировку
-            $order = order_update($_SESSION['profile']['user_id'], $order['order_id'], $description, $price);
-            if ($order !== false) {
-                includeModule('cache');
-                cache_update($order);
-                //@todo: здесь нужно снять блокировку
-                return [
-                    'completed' => true,
-                ];
+            includeModule('lock');
+            if (lock_lock($order['order_id'], 2, 1)) {
+                $order = order_update($_SESSION['profile']['user_id'], $order['order_id'], $description, $price);
+                if ($order !== false) {
+                    includeModule('cache');
+                    cache_update($order);
+                    lock_unlock($order['order_id']);
+                    return [
+                        'completed' => true,
+                    ];
+                } else {
+                    lock_unlock($order['order_id']);
+                    return [
+                        'error' => 'service temporary unavailable',
+                    ];
+                }
             } else {
-                //@todo: здесь нужно снять блокировку
                 return [
-                    'error' => 'service temporary unavailable',
+                    'error' => 'order locked',
                 ];
             }
         }
