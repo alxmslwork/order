@@ -5,7 +5,7 @@
 
 session_start();
 if (!isset($_SESSION['profile'])) {
-    header('Location: index.html');
+    header('Location: /index.html');
     exit(0);
 }
 
