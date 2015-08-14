@@ -16,12 +16,21 @@ if (!isset($_SESSION['profile'])) {
             if ($orderId !== false) {
                 includeModule('order');
                 // Атомарно отмечаем заказ удаленным
-                if (order_delete($orderId, $_SESSION['profile']['user_id'])) {
-                    // Если удалось удалить заказ, прогреваем кеш для поиска заказов соответсвующим образом
-                    includeModule('cache');
-                    cache_delete($orderId);
+                if (lock_lock($orderId, 2, 1)) {
+                    if (order_delete($orderId, $_SESSION['profile']['user_id'])) {
+                        // Если удалось удалить заказ, прогреваем кеш для поиска заказов соответсвующим образом
+                        includeModule('cache');
+                        cache_delete($orderId);
+                        lock_unlock($orderId);
+                        return [
+                            'completed' => true,
+                        ];
+                    } else {
+                        lock_unlock($orderId);
+                    }
+                } else {
                     return [
-                        'completed' => true,
+                        'error' => 'order locked',
                     ];
                 }
             }
